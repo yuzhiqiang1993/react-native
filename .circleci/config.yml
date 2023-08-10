@@ -1023,22 +1023,22 @@ jobs:
       - persist_to_workspace:
           root: /
           paths:
-            - /root/react-native/build/
-            - /root/react-native/.gradle/
-            - /root/react-native/packages/rn-tester/android/app/.cxx/
-            - /root/react-native/packages/rn-tester/android/app/build/
-            - /root/react-native/packages/react-native/sdks/download/
-            - /root/react-native/packages/react-native/sdks/hermes/
-            - /root/react-native/packages/react-native/ReactAndroid/.cxx/
-            - /root/react-native/packages/react-native/ReactAndroid/build/
-            - /root/react-native/packages/react-native/ReactAndroid/hermes-engine/.cxx/
-            - /root/react-native/packages/react-native/ReactAndroid/hermes-engine/build/
-            - /root/react-native/packages/react-native/ReactAndroid/flipper-integration/build/
-            - /root/react-native/packages/react-native/ReactAndroid/src/main/jni/prebuilt/
-            - /root/react-native/packages/react-native-gradle-plugin/.gradle/
-            - /root/react-native/packages/react-native-gradle-plugin/build/
-            - /root/react-native/packages/react-native-codegen/lib/
-            - /tmp/maven-local
+            - root/react-native/build/
+            - root/react-native/.gradle/
+            - root/react-native/packages/rn-tester/android/app/.cxx/
+            - root/react-native/packages/rn-tester/android/app/build/
+            - root/react-native/packages/react-native/sdks/download/
+            - root/react-native/packages/react-native/sdks/hermes/
+            - root/react-native/packages/react-native/ReactAndroid/.cxx/
+            - root/react-native/packages/react-native/ReactAndroid/build/
+            - root/react-native/packages/react-native/ReactAndroid/hermes-engine/.cxx/
+            - root/react-native/packages/react-native/ReactAndroid/hermes-engine/build/
+            - root/react-native/packages/react-native/ReactAndroid/flipper-integration/build/
+            - root/react-native/packages/react-native/ReactAndroid/src/main/jni/prebuilt/
+            - root/react-native/packages/react-native-gradle-plugin/.gradle/
+            - root/react-native/packages/react-native-gradle-plugin/build/
+            - root/react-native/packages/react-native-codegen/lib/
+            - tmp/maven-local
 
   # -------------------------
   #    JOBS: Test Android
@@ -1533,16 +1533,16 @@ jobs:
       - persist_to_workspace:
           root: /
           paths:
-            - /tmp/hermes/download
-            - /tmp/hermes/hermes
-            - /tmp/hermes/hermes-runtime-darwin
-            - /tmp/hermes/osx-bin
-            - /tmp/hermes/hermesversion
-            - /tmp/hermes/Release_tarball_present
-            - /tmp/hermes/Debug_tarball_present
-            - /tmp/hermes/Release_osx_bin
-            - /tmp/hermes/Debug_osx_bin
-            - /tmp/react-native-version
+            - tmp/hermes/download
+            - tmp/hermes/hermes
+            - tmp/hermes/hermes-runtime-darwin
+            - tmp/hermes/osx-bin
+            - tmp/hermes/hermesversion
+            - tmp/hermes/Release_tarball_present
+            - tmp/hermes/Debug_tarball_present
+            - tmp/hermes/Release_osx_bin
+            - tmp/hermes/Debug_osx_bin
+            - tmp/react-native-version
 
   build_hermesc_linux:
     docker:
@@ -1588,7 +1588,7 @@ jobs:
       - persist_to_workspace:
           root: /
           paths:
-            - /tmp/hermes/linux64-bin
+            - tmp/hermes/linux64-bin
 
   build_hermesc_apple:
     executor: reactnativeios
@@ -1620,7 +1620,7 @@ jobs:
       - persist_to_workspace:
           root: /
           paths:
-            - /root/react-native/packages/react-native/sdks/hermes/build_host_hermesc
+            - root/react-native/packages/react-native/sdks/hermes/build_host_hermesc
 
   build_apple_slices_hermes:
     parameters:
@@ -1790,8 +1790,8 @@ jobs:
       - persist_to_workspace:
           root: /
           paths:
-            - /tmp/hermes/hermes-runtime-darwin
-            - /tmp/hermes/osx-bin
+            - tmp/hermes/hermes-runtime-darwin
+            - tmp/hermes/osx-bin
 
   build_hermesc_windows:
     executor:
@@ -1996,7 +1996,7 @@ jobs:
             - persist_to_workspace:
                 root: /
                 paths:
-                  - /root/react-native/npm-artifacts/
+                  - root/react-native/npm-artifacts/
       # END: Dry-run
 
       # START: Stable releases
