@@ -41,9 +41,6 @@ references:
     /tmp/hermes/hermes-runtime-darwin
   hermes_osxbin_artifacts_dir: &hermes_osxbin_artifacts_dir
     /tmp/hermes/osx-bin
-  attach_hermes_workspace: &attach_hermes_workspace
-    attach_workspace:
-      at: *hermes_workspace_root
   xcodebuild_derived_data_path: &xcodebuild_derived_data_path
     ~/Library/Developer/Xcode/DerivedData/
 
@@ -765,7 +762,8 @@ jobs:
             cd packages/react-native/scripts
             sh run_ruby_tests.sh
       - run_yarn
-      - *attach_hermes_workspace
+      - attach_workspace:
+          at: /
       - run: |
           cd packages/rn-tester
           bundle check || bundle install
@@ -868,7 +866,7 @@ jobs:
       - checkout_code_with_cache
       - run_yarn
       - attach_workspace:
-          at: .
+          at: /
       - run:
           name: Install appium
           command: npm install appium@2.0.0 -g
@@ -962,7 +960,7 @@ jobs:
             yarn start
           background: true
       - attach_workspace:
-          at: .
+          at: /
       - with_gradle_cache:
           steps:
             - run:
@@ -1016,24 +1014,31 @@ jobs:
                   fi
                   ./gradlew publishAllToMavenTempLocal
 
+      - run:
+          name: Zip Maven Artifacts from /tmp/maven-local
+          command: zip -r /tmp/maven-local.zip /tmp/maven-local
+      - store_artifacts:
+          path: /tmp/maven-local.zip
+
       - persist_to_workspace:
-          root: /root/react-native/
+          root: /
           paths:
-            - build/
-            - .gradle/
-            - packages/rn-tester/android/app/.cxx/
-            - packages/rn-tester/android/app/build/
-            - packages/react-native/sdks/download/
-            - packages/react-native/sdks/hermes/
-            - packages/react-native/ReactAndroid/.cxx/
-            - packages/react-native/ReactAndroid/build/
-            - packages/react-native/ReactAndroid/hermes-engine/.cxx/
-            - packages/react-native/ReactAndroid/hermes-engine/build/
-            - packages/react-native/ReactAndroid/flipper-integration/build/
-            - packages/react-native/ReactAndroid/src/main/jni/prebuilt/
-            - packages/react-native-gradle-plugin/.gradle/
-            - packages/react-native-gradle-plugin/build/
-            - packages/react-native-codegen/lib/
+            - /root/react-native/build/
+            - /root/react-native/.gradle/
+            - /root/react-native/packages/rn-tester/android/app/.cxx/
+            - /root/react-native/packages/rn-tester/android/app/build/
+            - /root/react-native/packages/react-native/sdks/download/
+            - /root/react-native/packages/react-native/sdks/hermes/
+            - /root/react-native/packages/react-native/ReactAndroid/.cxx/
+            - /root/react-native/packages/react-native/ReactAndroid/build/
+            - /root/react-native/packages/react-native/ReactAndroid/hermes-engine/.cxx/
+            - /root/react-native/packages/react-native/ReactAndroid/hermes-engine/build/
+            - /root/react-native/packages/react-native/ReactAndroid/flipper-integration/build/
+            - /root/react-native/packages/react-native/ReactAndroid/src/main/jni/prebuilt/
+            - /root/react-native/packages/react-native-gradle-plugin/.gradle/
+            - /root/react-native/packages/react-native-gradle-plugin/build/
+            - /root/react-native/packages/react-native-codegen/lib/
+            - /tmp/maven-local
 
   # -------------------------
   #    JOBS: Test Android
@@ -1050,7 +1055,7 @@ jobs:
           # reasons otherwise we won't reuse the artifacts from the build_android job.
           command: node ./scripts/set-rn-version.js --build-type "dry-run"
       - attach_workspace:
-          at: .
+          at: /
 
       - with_gradle_cache:
           steps:
@@ -1098,12 +1103,12 @@ jobs:
       - checkout_code_with_cache
       - run_yarn
       - attach_workspace:
-          at: .
+          at: /
       - run:
           name: Create Android template project
           command: |
             REPO_ROOT=$(pwd)
-            node ./scripts/update-template-package.js "{\"react-native\":\"file:$REPO_ROOT/build/$(cat build/react-native-package-version)\"}"
+            node ./scripts/update-template-package.js "{\"react-native\":\"file:$REPO_ROOT/npm-artifacts/$(cat npm-artifacts/react-native-package-version)\"}"
             node ./scripts/template/initialize.js --reactNativeRootPath $REPO_ROOT --templateName $PROJECT_NAME --templateConfigPath "$REPO_ROOT/packages/react-native" --directory "/tmp/$PROJECT_NAME"
       - with_gradle_cache:
           steps:
@@ -1121,7 +1126,7 @@ jobs:
                   else
                     export ORG_GRADLE_PROJECT_hermesEnabled=false
                   fi
-                  ./gradlew assemble<< parameters.flavor >> -PREACT_NATIVE_MAVEN_LOCAL_REPO=/root/react-native/maven-local
+                  ./gradlew assemble<< parameters.flavor >> -PREACT_NATIVE_MAVEN_LOCAL_REPO=/tmp/maven-local
 
       - store_artifacts:
           path: /tmp/AndroidTemplateProject/android/app/build/outputs/apk/
@@ -1181,8 +1186,7 @@ jobs:
       - checkout_code_with_cache
       - run_yarn
       - attach_workspace:
-          at: .
-      - *attach_hermes_workspace
+          at: /
       - setup_ruby:
           ruby_version: << parameters.ruby_version >>
       - when:
@@ -1199,8 +1203,8 @@ jobs:
           name: Create iOS template project
           command: |
             REPO_ROOT=$(pwd)
-            PACKAGE=$(cat build/react-native-package-version)
-            PATH_TO_PACKAGE="$REPO_ROOT/build/$PACKAGE"
+            PACKAGE=$(cat npm-artifacts/react-native-package-version)
+            PATH_TO_PACKAGE="$REPO_ROOT/npm-artifacts/$PACKAGE"
             node ./scripts/update-template-package.js "{\"react-native\":\"file:$PATH_TO_PACKAGE\"}"
             node ./scripts/template/initialize.js --reactNativeRootPath $REPO_ROOT --templateName $PROJECT_NAME --templateConfigPath "$REPO_ROOT/packages/react-native" --directory "/tmp/$PROJECT_NAME"
       - with_xcodebuild_cache:
@@ -1297,7 +1301,8 @@ jobs:
     steps:
       - checkout_code_with_cache
       - run_yarn
-      - *attach_hermes_workspace
+      - attach_workspace:
+          at: /
 
       # The macOS machine can run out of storage if Hermes is enabled and built from source.
       # Since this job does not use the iOS Simulator, deleting it provides a quick way to
@@ -1526,21 +1531,18 @@ jobs:
       - check_if_osx_bin_is_present:
           flavor: Debug
       - persist_to_workspace:
-          root: *hermes_workspace_root
+          root: /
           paths:
-            - download
-            - hermes
-            - hermes-runtime-darwin
-            - osx-bin
-            - hermesversion
-            - Release_tarball_present
-            - Debug_tarball_present
-            - Release_osx_bin
-            - Debug_osx_bin
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - react-native-version
+            - /tmp/hermes/download
+            - /tmp/hermes/hermes
+            - /tmp/hermes/hermes-runtime-darwin
+            - /tmp/hermes/osx-bin
+            - /tmp/hermes/hermesversion
+            - /tmp/hermes/Release_tarball_present
+            - /tmp/hermes/Debug_tarball_present
+            - /tmp/hermes/Release_osx_bin
+            - /tmp/hermes/Debug_osx_bin
+            - /tmp/react-native-version
 
   build_hermesc_linux:
     docker:
@@ -1554,7 +1556,8 @@ jobs:
             apt update
             apt install -y git openssh-client cmake build-essential \
                 libreadline-dev libicu-dev jq zip python3
-      - *attach_hermes_workspace
+      - attach_workspace:
+          at: /
       - get_react_native_version
       - restore_cache:
           key: *hermes_linux_cache_key
@@ -1583,9 +1586,9 @@ jobs:
       - store_artifacts:
           path: /tmp/hermes/linux64-bin/
       - persist_to_workspace:
-          root: /tmp/hermes/
+          root: /
           paths:
-            - linux64-bin
+            - /tmp/hermes/linux64-bin
 
   build_hermesc_apple:
     executor: reactnativeios
@@ -1593,7 +1596,8 @@ jobs:
       - HERMES_WS_DIR: *hermes_workspace_root
       - HERMES_TARBALL_ARTIFACTS_DIR: *hermes_tarball_artifacts_dir
     steps:
-      - *attach_hermes_workspace
+      - attach_workspace:
+          at: /
       - stop_job_if_apple_artifacts_are_there:
           flavor: "All"
       - checkout_code_with_cache
@@ -1614,9 +1618,9 @@ jobs:
           paths:
             - ./packages/react-native/sdks/hermes/build_host_hermesc
       - persist_to_workspace:
-          root: ./packages/react-native/sdks/hermes/
+          root: /
           paths:
-            - build_host_hermesc
+            - /root/react-native/packages/react-native/sdks/hermes/build_host_hermesc
 
   build_apple_slices_hermes:
     parameters:
@@ -1639,7 +1643,8 @@ jobs:
       - HERMES_TARBALL_ARTIFACTS_DIR: *hermes_tarball_artifacts_dir
       - HERMES_OSXBIN_ARTIFACTS_DIR: *hermes_osxbin_artifacts_dir
     steps:
-      - *attach_hermes_workspace
+      - attach_workspace:
+          at: /
       - stop_job_if_apple_artifacts_are_there:
           flavor: << parameters.flavor >>
       - checkout_code_with_cache
@@ -1695,7 +1700,8 @@ jobs:
       - HERMES_WS_DIR: *hermes_workspace_root
       - HERMES_TARBALL_ARTIFACTS_DIR: *hermes_tarball_artifacts_dir
     steps:
-      - *attach_hermes_workspace
+      - attach_workspace:
+          at: /
       # Try to store the artifacts if they are already in the workspace
       - store_hermes_apple_artifacts:
           flavor: << parameters.flavor >>
@@ -1782,10 +1788,10 @@ jobs:
       - store_hermes_apple_artifacts:
           flavor: << parameters.flavor >>
       - persist_to_workspace:
-          root: /tmp/hermes/
+          root: /
           paths:
-            - hermes-runtime-darwin
-            - osx-bin
+            - /tmp/hermes/hermes-runtime-darwin
+            - /tmp/hermes/osx-bin
 
   build_hermesc_windows:
     executor:
@@ -1798,7 +1804,8 @@ jobs:
       - CMAKE_DIR: 'C:\Program Files\CMake\bin'
     steps:
       - checkout_code_with_cache
-      - *attach_hermes_workspace
+      - attach_workspace:
+          at: /
       - get_react_native_version_windows
       - restore_cache:
           key: *hermes_windows_cache_key
@@ -1858,9 +1865,9 @@ jobs:
       - store_artifacts:
           path: C:\tmp\hermes\win64-bin\
       - persist_to_workspace:
-          root: C:\tmp\hermes\
+          root: C:\
           paths:
-            - win64-bin
+            - tmp\hermes\win64-bin
 
   # -------------------------
   #      JOBS: Releases
@@ -1913,7 +1920,8 @@ jobs:
             mkdir -p ~/.ssh
             echo '|1|If6MU203eXTaaWL678YEfWkVMrw=|kqLeIAyTy8pzpj8x8Ae4Fr8Mtlc= ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==' >> ~/.ssh/known_hosts
       - checkout
-      - *attach_hermes_workspace
+      - attach_workspace:
+          at: /
       - run:
           name: Copy Hermes binaries
           command: |
@@ -1937,8 +1945,6 @@ jobs:
 
       - run_yarn
       - build_packages
-      - attach_workspace:
-          at: .
 
       # START: Stables and nightlies
       # This conditional step sets up the necessary credentials for publishing react-native to npm.
@@ -1965,18 +1971,9 @@ jobs:
                   fi
                   node ./scripts/publish-npm.js --<< parameters.release_type >>
 
-      - run:
-          name: Zip Maven Artifacts from /tmp/maven-local
-          command: zip -r /tmp/maven-local.zip /tmp/maven-local
-      - store_artifacts:
-          path: /tmp/maven-local.zip
       - store_artifacts:
           when: on_fail
           path: /root/.npm/_logs
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - maven-local
 
       # START: Dry-run
       # Provide a react-native package for this commit as a Circle CI release artifact.
@@ -1987,19 +1984,19 @@ jobs:
             - run:
                 name: Build release package as a job artifact
                 command: |
-                  mkdir -p build
+                  mkdir -p npm-artifacts
 
                   FILENAME=$(cd packages/react-native; npm pack | tail -1)
-                  mv packages/react-native/$FILENAME build/
+                  mv packages/react-native/$FILENAME npm-artifacts/
 
-                  echo $FILENAME > build/react-native-package-version
+                  echo $FILENAME > npm-artifacts/react-native-package-version
             - store_artifacts:
-                path: ~/react-native/build/
-                destination: build
+                path: ~/react-native/npm-artifacts/
+                destination: npm-artifacts
             - persist_to_workspace:
-                root: .
+                root: /
                 paths:
-                  - build/*
+                  - /root/react-native/npm-artifacts/
       # END: Dry-run
 
       # START: Stable releases
