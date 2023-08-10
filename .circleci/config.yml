@@ -1596,11 +1596,11 @@ jobs:
       - HERMES_WS_DIR: *hermes_workspace_root
       - HERMES_TARBALL_ARTIFACTS_DIR: *hermes_tarball_artifacts_dir
     steps:
+      - checkout_code_with_cache
       - attach_workspace:
           at: /
       - stop_job_if_apple_artifacts_are_there:
           flavor: "All"
-      - checkout_code_with_cache
       - get_react_native_version
       - setup_hermes_workspace
       - restore_cache:
