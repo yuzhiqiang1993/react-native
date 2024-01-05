@@ -29,3 +29,5 @@ include(":packages:react-native:ReactAndroid:hermes-engine")
 
 project(":packages:react-native:ReactAndroid:hermes-engine").projectDir =
     file("ReactAndroid/hermes-engine/")
+
+includeBuild("../react-native-gradle-plugin/")
